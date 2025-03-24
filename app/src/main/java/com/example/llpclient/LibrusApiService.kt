@@ -21,5 +21,19 @@ interface LibrusApiService {
     suspend fun performLogin(@QueryMap params: Map<String, String>): Response<ResponseBody>
 
     @GET("2.0/")
-    suspend fun getUserData(@Header("Authorization") authToken: String): Response<com.example.llpclient.data.remote.LoginResponse>
+    suspend fun getUserData(@Header("Authorization") authToken: String): Response<LoginResponse>
+    @GET("2.0/Grades")
+    suspend fun getGrades(@Header("Authorization") token: String): Response<GradesResponse>
+
+    @GET("2.0/Subjects/{id}")
+    suspend fun getSubject(
+        @Header("Authorization") token: String,
+        @Path("id") id: String
+    ): Response<SubjectResponse>
+
+    @GET("2.0/Grades/Categories/{id}")
+    suspend fun getGradeCategory(
+        @Header("Authorization") token: String,
+        @Path("id") id: String
+    ): Response<GradeCategoryResponse>
 }

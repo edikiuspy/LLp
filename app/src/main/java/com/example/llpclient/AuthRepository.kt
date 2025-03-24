@@ -13,7 +13,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URLDecoder
 import java.util.Date
 
-class AuthRepository(private val context: Context) {
+class AuthRepository(context: Context) {
     private val database = AppDatabase.getDatabase(context)
     private val userDao = database.userDao()
 

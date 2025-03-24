@@ -1,4 +1,4 @@
-package com.example.llpclient.data.remote
+package com.example.llpclient
 
 import com.google.gson.annotations.SerializedName
 
