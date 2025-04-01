@@ -25,15 +25,16 @@ interface LibrusApiService {
     @GET("2.0/Grades")
     suspend fun getGrades(@Header("Authorization") token: String): Response<GradesResponse>
 
+
     @GET("2.0/Subjects/{id}")
-    suspend fun getSubject(
+    suspend fun getSubjectDetails(
         @Header("Authorization") token: String,
-        @Path("id") id: String
+        @Path("id") subjectId: Int
     ): Response<SubjectResponse>
 
     @GET("2.0/Grades/Categories/{id}")
-    suspend fun getGradeCategory(
+    suspend fun getCategoryDetails(
         @Header("Authorization") token: String,
-        @Path("id") id: String
+        @Path("id") categoryId: Int
     ): Response<GradeCategoryResponse>
 }
