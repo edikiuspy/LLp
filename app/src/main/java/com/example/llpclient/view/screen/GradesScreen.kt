@@ -27,7 +27,22 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.ui.unit.sp
 import com.example.llpclient.view.model.Grade
 import com.example.llpclient.view.model.GradesViewModel
+import java.util.SortedMap
 import kotlin.math.max
+
+
+
+sealed class GradesUiState {
+    object Loading : GradesUiState()
+    data class Error(val message: String) : GradesUiState()
+    object Empty : GradesUiState()
+    data class Success(
+        val groupedGrades: SortedMap<String, List<Grade>>,
+        val isRefreshing: Boolean
+    ) : GradesUiState()
+}
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -50,6 +65,18 @@ fun GradesScreen(
     }
 
 
+    val uiState = remember(isLoading, error, grades, groupedGrades) {
+        when {
+
+            isLoading && grades.isEmpty() -> GradesUiState.Loading
+            error != null -> GradesUiState.Error(error ?: "Unknown error")
+
+            !isLoading && groupedGrades.isEmpty() -> GradesUiState.Empty
+
+            else -> GradesUiState.Success(groupedGrades, isLoading)
+        }
+    }
+
     val expandedSubjects = remember { mutableStateOf(emptySet<String>()) }
 
     LaunchedEffect(key1 = true) {
@@ -67,85 +94,89 @@ fun GradesScreen(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
         )
 
-        if (isLoading && grades.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (error != null) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = error ?: "Unknown error",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-        } else if (groupedGrades.isEmpty() && !isLoading) {
 
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No grades found.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-        } else {
-            SwipeRefresh(
-                state = rememberSwipeRefreshState(isLoading),
-                onRefresh = { gradesViewModel.refreshGrades() }
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-
+        when (uiState) {
+            is GradesUiState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    groupedGrades.forEach { (subjectName, subjectGrades) ->
-                        val isExpanded = subjectName in expandedSubjects.value
+                    CircularProgressIndicator()
+                }
+            }
+            is GradesUiState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = uiState.message,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+            is GradesUiState.Empty -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No grades found.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+            is GradesUiState.Success -> {
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(uiState.isRefreshing),
+                    onRefresh = { gradesViewModel.refreshGrades() }
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    ) {
+                        uiState.groupedGrades.forEach { (subjectName, subjectGrades) ->
+                            val isExpanded = subjectName in expandedSubjects.value
 
+                            item(key = "header_$subjectName") {
+                                SubjectHeader(
+                                    subjectName = subjectName,
+                                    isExpanded = isExpanded,
+                                    gradeCount = subjectGrades.size,
+                                    onClick = {
 
-                        item(key = "header_$subjectName") {
-                            SubjectHeader(
-                                subjectName = subjectName,
-                                isExpanded = isExpanded,
-                                gradeCount = subjectGrades.size,
-                                onClick = {
-                                    expandedSubjects.value = if (isExpanded) {
-                                        expandedSubjects.value - subjectName
-                                    } else {
-                                        expandedSubjects.value + subjectName
+                                        expandedSubjects.value = when (isExpanded) {
+                                            true -> expandedSubjects.value - subjectName
+                                            false -> expandedSubjects.value + subjectName
+                                        }
                                     }
-                                }
-                            )
-                        }
+                                )
+                            }
 
-                        if (isExpanded) {
+
+
                             items(
-                                items = subjectGrades,
+                                items = when (isExpanded) {
+                                    true -> subjectGrades
+                                    false -> emptyList()
+                                },
                                 key = { grade -> "grade_${grade.id}" }
                             ) { grade ->
-
                                 Box(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)) {
                                     GradeItem(grade = grade)
                                 }
                             }
                         }
+                        item { Spacer(Modifier.height(16.dp)) }
                     }
-
-                    item { Spacer(Modifier.height(16.dp)) }
                 }
             }
         }
     }
 }
+
 @Composable
 fun SubjectHeader(
     subjectName: String,
@@ -154,14 +185,15 @@ fun SubjectHeader(
     onClick: () -> Unit
 ) {
     val initialFontSize = MaterialTheme.typography.titleLarge.fontSize.value
-
-    var fontSize by remember(subjectName) {
-        mutableFloatStateOf(initialFontSize)
-    }
+    var fontSize by remember(subjectName) { mutableFloatStateOf(initialFontSize) }
     val minFontSize = 12f
 
     val rotationAngle by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
+
+        targetValue = when (isExpanded) {
+            true -> 180f
+            false -> 0f
+        },
         label = "ArrowRotation"
     )
 
@@ -190,8 +222,11 @@ fun SubjectHeader(
                     overflow = TextOverflow.Ellipsis,
                     softWrap = false,
                     onTextLayout = { layoutResult ->
-                        if (layoutResult.hasVisualOverflow && fontSize > minFontSize) {
-                            fontSize = max(minFontSize, fontSize * 0.9f)
+
+                        when {
+                            layoutResult.hasVisualOverflow && fontSize > minFontSize -> {
+                                fontSize = max(minFontSize, fontSize * 0.9f)
+                            }
                         }
                     }
                 )
@@ -199,14 +234,22 @@ fun SubjectHeader(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "$gradeCount ${if (gradeCount == 1) "grade" else "grades"}",
+
+                    text = "$gradeCount ${when (gradeCount) {
+                        1 -> "grade"
+                        else -> "grades"
+                    }}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(end = 8.dp)
                 )
                 Icon(
                     imageVector = Icons.Filled.ArrowDropDown,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+
+                    contentDescription = when (isExpanded) {
+                        true -> "Collapse"
+                        false -> "Expand"
+                    },
                     modifier = Modifier.rotate(rotationAngle)
                 )
             }
@@ -280,13 +323,18 @@ fun GradeItem(grade: Grade) {
             }
 
 
-            if (grade.hasComments) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.Default.ChatBubble,
-                    contentDescription = "Has comments",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            when (grade.hasComments) {
+                true -> {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.ChatBubble,
+                        contentDescription = "Has comments",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+
+                false -> Unit
             }
         }
     }
