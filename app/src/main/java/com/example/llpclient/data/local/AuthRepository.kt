@@ -1,7 +1,9 @@
-package com.example.llpclient
+package com.example.llpclient.data.local
 
 import android.content.Context
 import android.util.Log
+import com.example.llpclient.data.local.schema.UserEntity
+import com.example.llpclient.data.remote.LibrusApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Cookie

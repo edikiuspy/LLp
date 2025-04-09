@@ -1,4 +1,4 @@
-package com.example.llpclient
+package com.example.llpclient.data.local.schema
 
 import androidx.room.Dao
 import androidx.room.Insert

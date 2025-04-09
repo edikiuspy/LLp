@@ -20,6 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.llpclient.ui.theme.LLpClientTheme
+import com.example.llpclient.view.model.GradesViewModel
+import com.example.llpclient.view.model.LoginViewModel
+import com.example.llpclient.view.screen.GradesScreen
+import com.example.llpclient.view.screen.LoginScreen
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {

@@ -1,4 +1,4 @@
-package com.example.llpclient
+package com.example.llpclient.view.model
 
 sealed class LoginState {
     object Initial : LoginState()

@@ -1,5 +1,9 @@
-package com.example.llpclient
+package com.example.llpclient.data.remote
 
+import com.example.llpclient.data.remote.dto.GradeCategoryResponse
+import com.example.llpclient.data.remote.dto.GradesResponse
+import com.example.llpclient.data.remote.dto.LoginResponse
+import com.example.llpclient.data.remote.dto.SubjectResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*

@@ -1,4 +1,4 @@
-package com.example.llpclient
+package com.example.llpclient.view.screen
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -25,6 +25,8 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.unit.sp
+import com.example.llpclient.view.model.Grade
+import com.example.llpclient.view.model.GradesViewModel
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
