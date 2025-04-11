@@ -2,11 +2,15 @@ package com.example.llpclient.data.remote
 
 import com.example.llpclient.data.remote.dto.GradeCategoryResponse
 import com.example.llpclient.data.remote.dto.GradesResponse
-import com.example.llpclient.data.remote.dto.LoginResponse
 import com.example.llpclient.data.remote.dto.SubjectResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.QueryMap
 
 interface LibrusApiService {
     @GET("OAuth/Authorization")
@@ -24,21 +28,16 @@ interface LibrusApiService {
     @GET("OAuth/Authorization/PerformLogin")
     suspend fun performLogin(@QueryMap params: Map<String, String>): Response<ResponseBody>
 
-    @GET("2.0/")
-    suspend fun getUserData(@Header("Authorization") authToken: String): Response<LoginResponse>
     @GET("2.0/Grades")
-    suspend fun getGrades(@Header("Authorization") token: String): Response<GradesResponse>
-
+    suspend fun getGrades(): Response<GradesResponse>
 
     @GET("2.0/Subjects/{id}")
     suspend fun getSubjectDetails(
-        @Header("Authorization") token: String,
         @Path("id") subjectId: Int
     ): Response<SubjectResponse>
 
     @GET("2.0/Grades/Categories/{id}")
     suspend fun getCategoryDetails(
-        @Header("Authorization") token: String,
         @Path("id") categoryId: Int
     ): Response<GradeCategoryResponse>
 }

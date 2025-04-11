@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.androidx.room)
+    id("com.google.dagger.hilt.android")
+    id("kotlin-kapt")
+
 }
 
 android {
@@ -99,4 +102,16 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.accompanist.swiperefresh)
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.work)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.work.runtime.ktx)
+    kapt(libs.androidx.hilt.compiler)
+
+    kapt(libs.hilt.android.compiler)
+
+
+}
+kapt {
+    correctErrorTypes = true
 }

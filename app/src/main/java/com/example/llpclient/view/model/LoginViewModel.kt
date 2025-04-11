@@ -1,53 +1,51 @@
 package com.example.llpclient.view.model
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.llpclient.data.local.AuthRepository
+import com.example.llpclient.data.local.AuthManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LoginViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = AuthRepository(application)
-
-    private val _loginState = MutableStateFlow<LoginState>(LoginState.Initial)
-    val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
-
-    private val _isLoggedIn = MutableStateFlow(true)
-    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
-
-    init {
-        checkLoginStatus()
-    }
-
-    private fun checkLoginStatus() {
-        viewModelScope.launch {
-            _isLoggedIn.value = repository.isLoggedIn()
-        }
-    }
-
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val authManager: AuthManager
+) : ViewModel() {
+    private val _loginOperationState = MutableStateFlow<LoginState>(LoginState.Initial)
+    val loginOperationState: StateFlow<LoginState> = _loginOperationState.asStateFlow()
+    val isLoggedIn: StateFlow<Boolean> = authManager.isLoggedIn
     fun login(username: String, password: String) {
+        if (_loginOperationState.value == LoginState.Loading) {
+            return
+        }
         viewModelScope.launch {
-            _loginState.value = LoginState.Loading
-
-            repository.login(username, password)
-                .onSuccess {
-                    _loginState.value = LoginState.Success
-                    _isLoggedIn.value = true
+            _loginOperationState.value = LoginState.Loading
+            authManager.login(username, password)
+                .onSuccess { success ->
+                    if (success) {
+                        _loginOperationState.value = LoginState.Success
+                    } else {
+                        _loginOperationState.value = LoginState.Error("Login failed unexpectedly.")
+                    }
                 }
-                .onFailure {
-                    _loginState.value = LoginState.Error(it.message ?: "Unknown error")
+                .onFailure { exception ->
+                    _loginOperationState.value = LoginState.Error(exception.message ?: "Unknown login error")
                 }
         }
     }
-
     fun logout() {
         viewModelScope.launch {
-            repository.logout()
-            _isLoggedIn.value = false
-            _loginState.value = LoginState.Initial
+            authManager.logout()
+            _loginOperationState.value = LoginState.Initial
+        }
+    }
+    fun clearLoginError() {
+        if (_loginOperationState.value is LoginState.Error) {
+            _loginOperationState.value = LoginState.Initial
         }
     }
 }

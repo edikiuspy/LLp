@@ -1,64 +1,29 @@
 package com.example.llpclient.data.local
-
-import android.content.Context
 import android.util.Log
 import com.example.llpclient.view.model.Grade
 import com.example.llpclient.view.model.GradeCategory
-import com.example.llpclient.data.remote.LibrusApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class GradesRepository(context: Context) {
-    private val database = AppDatabase.getDatabase(context)
-    private val userDao = database.userDao()
+@Singleton
+class GradesRepository @Inject constructor(
+    authManager: AuthManager
 
-    private val client: OkHttpClient by lazy {
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-
-        OkHttpClient.Builder()
-            .addInterceptor(logging)
-
-            .build()
-    }
-
-
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl("https://api.librus.pl/")
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-
-
-    private val apiService: LibrusApiService by lazy {
-        retrofit.create(LibrusApiService::class.java)
-    }
-
-
+) {
+    private val apiService = authManager.apiService
     private val subjectCache = mutableMapOf<Int, String>()
     private val categoryCache = mutableMapOf<Int, String>()
 
     suspend fun getGrades(): Result<List<Grade>> {
         return withContext(Dispatchers.IO) {
             try {
-                val user = userDao.getLoggedInUser() ?:
-                return@withContext Result.failure(Exception("User not logged in"))
-
-                val token = "Bearer ${user.authToken}"
-
-
-                val gradesResponse = apiService.getGrades(token)
+                val gradesResponse = apiService.getGrades()
 
                 if (gradesResponse.isSuccessful && gradesResponse.body() != null) {
                     val apiGrades = gradesResponse.body()!!.grades
@@ -67,8 +32,8 @@ class GradesRepository(context: Context) {
                     val grades = coroutineScope {
                         apiGrades.map { apiGrade ->
                             async {
-                                val subjectName = getSubjectName(token, apiGrade.subject.id)
-                                val categoryName = getCategoryName(token, apiGrade.category.id)
+                                val subjectName = getSubjectName(apiGrade.subject.id)
+                                val categoryName = getCategoryName(apiGrade.category.id)
 
                                 val hasComments = apiGrade.comments!=null
 
@@ -91,27 +56,21 @@ class GradesRepository(context: Context) {
                     }
                     Result.success(grades)
                 } else {
-
                     val errorMsg = "Failed to fetch grades. Code: ${gradesResponse.code()}, Message: ${gradesResponse.message()}"
                     Log.e("GradesRepository", errorMsg)
                     Result.failure(IOException(errorMsg))
                 }
             } catch (e: Exception) {
-
                 Log.e("GradesRepository", "Error fetching grades", e)
                 Result.failure(e)
             }
         }
     }
-
-
-    private suspend fun getSubjectName(token: String, subjectId: Int): String {
-
+    private suspend fun getSubjectName(subjectId: Int): String {
         subjectCache[subjectId]?.let { return it }
 
-
         return try {
-            val response = apiService.getSubjectDetails(token, subjectId)
+                val response = apiService.getSubjectDetails(subjectId)
             if (response.isSuccessful && response.body() != null) {
                 val name = response.body()!!.subject.name
                 subjectCache[subjectId] = name
@@ -127,13 +86,11 @@ class GradesRepository(context: Context) {
     }
 
 
-    private suspend fun getCategoryName(token: String, categoryId: Int): String {
-
+    private suspend fun getCategoryName(categoryId: Int): String {
         categoryCache[categoryId]?.let { return it }
 
-
         return try {
-            val response = apiService.getCategoryDetails(token, categoryId)
+                val response = apiService.getCategoryDetails(categoryId)
             if (response.isSuccessful && response.body() != null) {
                 val name = response.body()!!.category.name
                 categoryCache[categoryId] = name
@@ -147,8 +104,4 @@ class GradesRepository(context: Context) {
             "Category #$categoryId"
         }
     }
-
-
-
-
 }
