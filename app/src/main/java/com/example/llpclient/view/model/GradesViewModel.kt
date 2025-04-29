@@ -19,7 +19,8 @@ data class Grade(
     val subjectName: String,
     val category: GradeCategory,
     val hasComments: Boolean,
-    val semester: Int
+    val semester: Int,
+    val comments: String
 )
 
 data class GradeCategory(

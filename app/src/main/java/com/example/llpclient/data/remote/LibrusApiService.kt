@@ -1,5 +1,6 @@
 package com.example.llpclient.data.remote
 
+import com.example.llpclient.data.remote.dto.CommentApiResponse
 import com.example.llpclient.data.remote.dto.GradeCategoryResponse
 import com.example.llpclient.data.remote.dto.GradesResponse
 import com.example.llpclient.data.remote.dto.SubjectResponse
@@ -40,4 +41,8 @@ interface LibrusApiService {
     suspend fun getCategoryDetails(
         @Path("id") categoryId: Int
     ): Response<GradeCategoryResponse>
+    @GET("2.0/Grades/Comments/{id}")
+    suspend fun getCommentDetails(
+        @Path("id") commentId: Int
+    ): Response<CommentApiResponse>
 }

@@ -13,7 +13,7 @@ data class GradeDto(
     @SerializedName("AddDate") val addDate: String,
     @SerializedName("Subject") val subject: ResourceLink,
     @SerializedName("Category") val category: ResourceLink,
-    @SerializedName("Comments") val comments: List<ResourceLink>?,
+    @SerializedName("Comments") val comments: List<CommentDetailDto>?,
     @SerializedName("Semester") val semester: Int,
     @SerializedName("IsConstituent") val isConstituent: Boolean,
     @SerializedName("IsFinal") val isFinal: Boolean,
