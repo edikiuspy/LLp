@@ -50,8 +50,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.llpclient.ui.theme.LLpClientTheme
 import com.example.llpclient.view.model.GradesViewModel
 import com.example.llpclient.view.model.LoginViewModel
+import com.example.llpclient.view.model.TimetableViewModel
 import com.example.llpclient.view.screen.GradesScreen
 import com.example.llpclient.view.screen.LoginScreen
+import com.example.llpclient.view.screen.TimetableScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -81,7 +83,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppContent(
     loginViewModel: LoginViewModel = hiltViewModel(),
-    gradesViewModel: GradesViewModel = hiltViewModel()
+    gradesViewModel: GradesViewModel = hiltViewModel(),
+    timetableViewModel: TimetableViewModel = hiltViewModel(),
 ) {
     val isLoggedIn by loginViewModel.isLoggedIn.collectAsState()
 
@@ -126,10 +129,7 @@ fun AppContent(
                         }
                     }
                     "Timetable" -> {
-
-                        Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                            Text("Timetable Screen (Not Implemented)")
-                        }
+                        TimetableScreen(timetableViewModel)
                     }
                     else -> {
                         Box(

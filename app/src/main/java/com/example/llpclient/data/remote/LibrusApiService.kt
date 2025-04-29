@@ -4,6 +4,7 @@ import com.example.llpclient.data.remote.dto.CommentApiResponse
 import com.example.llpclient.data.remote.dto.GradeCategoryResponse
 import com.example.llpclient.data.remote.dto.GradesResponse
 import com.example.llpclient.data.remote.dto.SubjectResponse
+import com.example.llpclient.data.remote.dto.TimetableResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Field
@@ -45,4 +46,7 @@ interface LibrusApiService {
     suspend fun getCommentDetails(
         @Path("id") commentId: Int
     ): Response<CommentApiResponse>
+
+    @GET("2.0/Timetables")
+    suspend fun getTimetable(): Response<TimetableResponse>
 }
