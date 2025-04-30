@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Message
 import androidx.compose.material.icons.filled.Filter6
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -51,9 +52,11 @@ import com.example.llpclient.ui.theme.LLpClientTheme
 import com.example.llpclient.view.model.GradesViewModel
 import com.example.llpclient.view.model.LoginViewModel
 import com.example.llpclient.view.model.TimetableViewModel
+import com.example.llpclient.view.model.MessagesViewModel
 import com.example.llpclient.view.screen.GradesScreen
 import com.example.llpclient.view.screen.LoginScreen
 import com.example.llpclient.view.screen.TimetableScreen
+import com.example.llpclient.view.screen.MessagesScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -85,6 +88,7 @@ fun AppContent(
     loginViewModel: LoginViewModel = hiltViewModel(),
     gradesViewModel: GradesViewModel = hiltViewModel(),
     timetableViewModel: TimetableViewModel = hiltViewModel(),
+    messagesViewModel: MessagesViewModel = hiltViewModel()
 ) {
     val isLoggedIn by loginViewModel.isLoggedIn.collectAsState()
 
@@ -107,6 +111,7 @@ fun AppContent(
             content = { paddingValues ->
                 when (currentScreen) {
                     "Grades" -> GradesScreen(gradesViewModel, paddingValues)
+                    "Messages"-> MessagesScreen(messagesViewModel,paddingValues)
                     "Home" -> {
 
                         Box(
@@ -208,6 +213,16 @@ fun DetailedDrawerExample(
                             scope.launch { drawerState.close() }
                         },
                     )
+                    NavigationDrawerItem(
+                        label = { Text("Messages") },
+                        selected = currentScreen == "Messages",
+                        icon = { Icon(Icons.AutoMirrored.Outlined.Message, contentDescription = null) },
+                        onClick = {
+                            onScreenSelected("Messages")
+                            scope.launch { drawerState.close() }
+                        },
+                    )
+
 
                     Spacer(Modifier.height(12.dp))
                 }

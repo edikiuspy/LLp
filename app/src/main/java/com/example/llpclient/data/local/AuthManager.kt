@@ -94,6 +94,20 @@ class AuthManager @Inject constructor(
             .create(LibrusApiService::class.java)
     }
 
+    val messageService: LibrusApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://wiadomosci.librus.pl/").client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(LibrusApiService::class.java)
+    }
+    val synergyService: LibrusApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://synergia.librus.pl/").client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(LibrusApiService::class.java)
+    }
     private suspend fun loadTokenFromDatabase() {
 
 
@@ -185,6 +199,7 @@ class AuthManager @Inject constructor(
                 Log.i("AuthManager", "Re-authentication successful. Got new token.")
 
                 saveAuthToken(newToken)
+                ensureMessageServiceAccess()
                 newToken
             } else {
                 Log.e("AuthManager", "Re-authentication failed: Could not extract oauth_token cookie after re-login steps.")
@@ -236,8 +251,7 @@ class AuthManager @Inject constructor(
                     currentToken = token
                     _isLoggedIn.value = true
                 }
-
-
+                ensureMessageServiceAccess()
 
                 Result.success(true)
 
@@ -248,7 +262,19 @@ class AuthManager @Inject constructor(
             }
         }
     }
-
+    private suspend fun ensureMessageServiceAccess() {
+        try {
+            synergyService.visitMessages()
+            val sessionCookies = cookieJar.getCookiesForDomain("synergia.librus.pl")
+            Log.d("AuthManager", "Synergia cookies after visit: $sessionCookies")
+            messageService.initializeMessages()
+            val messageCookies = cookieJar.getCookiesForDomain("wiadomosci.librus.pl")
+            Log.d("AuthManager", "Messages cookies after initialization: $messageCookies")
+            Log.d("AuthManager", "All cookies after initialization:\n$cookieJar")
+        } catch (e: Exception) {
+            Log.e("AuthManager", "Error ensuring message service access", e)
+        }
+    }
 
     suspend fun logout() {
 
@@ -291,7 +317,18 @@ class SessionCookieJar : CookieJar {
             val hostCookies = cookieStore[url.host]
             hostCookies?.removeAll { it.expiresAt <= System.currentTimeMillis() }
 
-            val cookiesForUrl = hostCookies?.filter { it.matches(url) } ?: emptyList()
+            val isLibrusDomain = url.host.endsWith("librus.pl")
+
+            val cookiesForUrl = if (isLibrusDomain) {
+                val allLibrusCookies = mutableListOf<Cookie>()
+                cookieStore.filterKeys { it.endsWith("librus.pl") }.values.forEach { cookies ->
+                    allLibrusCookies.addAll(cookies.filter { it.matches(url) })
+                }
+                allLibrusCookies
+            } else {
+                hostCookies?.filter { it.matches(url) } ?: emptyList()
+            }
+
             Log.d("SessionCookieJar", "Loading ${cookiesForUrl.size} cookies for ${url.host}: $cookiesForUrl")
             return cookiesForUrl
         }
@@ -311,6 +348,14 @@ class SessionCookieJar : CookieJar {
             }
             Log.d("SessionCookieJar", "Cookie not found: $name")
             return null
+        }
+    }
+
+    fun getCookiesForDomain(domain: String): List<Cookie> {
+        synchronized(lock) {
+            val cookies = cookieStore[domain] ?: return emptyList()
+            cookies.removeAll { it.expiresAt <= System.currentTimeMillis() }
+            return cookies.toList()
         }
     }
 

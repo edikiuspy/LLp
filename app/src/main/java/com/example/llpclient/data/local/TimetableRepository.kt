@@ -45,7 +45,7 @@ class TimetableRepository @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("TimetableRepository", "Error fetching timetable", e)
-                Result.failure(e) // Return the actual exception
+                Result.failure(e)
             }
         }
     }

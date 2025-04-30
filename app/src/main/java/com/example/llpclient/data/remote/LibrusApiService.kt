@@ -3,6 +3,7 @@ package com.example.llpclient.data.remote
 import com.example.llpclient.data.remote.dto.CommentApiResponse
 import com.example.llpclient.data.remote.dto.GradeCategoryResponse
 import com.example.llpclient.data.remote.dto.GradesResponse
+import com.example.llpclient.data.remote.dto.MessagesResponse
 import com.example.llpclient.data.remote.dto.SubjectResponse
 import com.example.llpclient.data.remote.dto.TimetableResponse
 import okhttp3.ResponseBody
@@ -47,6 +48,12 @@ interface LibrusApiService {
         @Path("id") commentId: Int
     ): Response<CommentApiResponse>
 
+    @GET("api/inbox/messages")
+    suspend fun getMessages(): Response<MessagesResponse>
+    @GET("wiadomosci3")
+    suspend fun visitMessages(): ResponseBody
+    @GET("/")
+    suspend fun initializeMessages(): ResponseBody
     @GET("2.0/Timetables")
     suspend fun getTimetable(): Response<TimetableResponse>
 }
