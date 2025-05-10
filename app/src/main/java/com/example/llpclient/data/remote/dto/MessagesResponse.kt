@@ -7,7 +7,7 @@ data class MessagesResponse(
 )
 
 data class MessageDto(
-    @SerializedName("messageId") val messageId: String,
+    @SerializedName("messageId") val messageId: Int,
     @SerializedName("senderFirstName") val senderFirstName: String,
     @SerializedName("senderLastName") val senderLastName: String,
     @SerializedName("senderName") val senderName: String,

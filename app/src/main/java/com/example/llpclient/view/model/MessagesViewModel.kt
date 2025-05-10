@@ -16,7 +16,7 @@ import java.time.format.DateTimeParseException
 import javax.inject.Inject
 
 data class Message(
-    val id: String,
+    val id: Int,
     val sendDate: String,
     val topic: String,
     val content: String,

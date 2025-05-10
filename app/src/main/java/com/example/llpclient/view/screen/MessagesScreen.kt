@@ -12,17 +12,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
@@ -41,11 +43,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.llpclient.view.model.Message
@@ -180,15 +187,6 @@ fun MessageItem(message: Message) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
-        Box(modifier = Modifier.size(24.dp).padding(end = 12.dp)) {
-
-            Checkbox(checked = false, onCheckedChange = null, enabled = false)
-
-        }
-
-
-
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center
@@ -223,33 +221,74 @@ fun MessageItem(message: Message) {
     }
 
     if (showPopup) {
-        Dialog(onDismissRequest = { showPopup = false }) {
+        val configuration = LocalConfiguration.current
+        val screenHeight = configuration.screenHeightDp.dp
+
+        val annotatedContent = remember(message.content) {
+            try {
+                val htmlContent = String(Base64.getDecoder().decode(message.content))
+                HtmlCompat.fromHtml(htmlContent, HtmlCompat.FROM_HTML_MODE_LEGACY).let { spanned ->
+                    buildAnnotatedString { append(spanned) }
+                }
+            } catch (_: IllegalArgumentException) {
+                AnnotatedString("Error: Content could not be displayed.")
+            } catch (e: Exception) {
+                AnnotatedString("Error processing content.")
+            }
+        }
+
+        Dialog(
+            onDismissRequest = { showPopup = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 tonalElevation = 8.dp,
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier
-                    .padding(16.dp)
-                    .wrapContentSize()
+                    .fillMaxWidth(0.95f)
+                    .widthIn(max = 600.dp)
+                    .heightIn(min = 150.dp, max = screenHeight * 0.8f)
+                    .wrapContentHeight()
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .fillMaxSize()
+                        .padding(all = 20.dp),
                 ) {
                     Text(
                         text = message.topic,
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Text(
-                        text = String(Base64.getDecoder().decode(message.content)),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Button(
-                        onClick = { showPopup = false },
-                        modifier = Modifier.align(Alignment.End)
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
                     ) {
-                        Text("Close")
+                        Text(
+                            text = annotatedContent,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Button(
+                            onClick = { showPopup = false }
+                        ) {
+                            Text("Close")
+                        }
                     }
                 }
             }

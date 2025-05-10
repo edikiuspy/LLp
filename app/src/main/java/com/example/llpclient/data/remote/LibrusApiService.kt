@@ -3,6 +3,8 @@ package com.example.llpclient.data.remote
 import com.example.llpclient.data.remote.dto.CommentApiResponse
 import com.example.llpclient.data.remote.dto.GradeCategoryResponse
 import com.example.llpclient.data.remote.dto.GradesResponse
+import com.example.llpclient.data.remote.dto.Message
+import com.example.llpclient.data.remote.dto.MessageResponse
 import com.example.llpclient.data.remote.dto.MessagesResponse
 import com.example.llpclient.data.remote.dto.ReceiverGroupResponse
 import com.example.llpclient.data.remote.dto.RecipientTypesResponse
@@ -56,6 +58,10 @@ interface LibrusApiService {
 
     @GET("api/inbox/messages")
     suspend fun getMessages(): Response<MessagesResponse>
+    @GET("api/inbox/messages/{id}")
+    suspend fun getMessageDetails(
+        @Path("id") messageId: Int
+    ): Response<MessageResponse>
     @GET("wiadomosci3")
     suspend fun visitMessages(): ResponseBody
     @GET("api/receivers/types")
