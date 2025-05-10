@@ -86,7 +86,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx.v270)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.material3.v130beta04)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.window.size)
 
@@ -109,6 +108,7 @@ dependencies {
     kapt(libs.androidx.hilt.compiler)
 
     kapt(libs.hilt.android.compiler)
+    ksp(libs.androidx.room.compiler)
 
 
 }

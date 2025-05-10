@@ -19,12 +19,17 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.llpclient.view.model.Message
 import com.example.llpclient.view.model.MessagesViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -62,7 +68,7 @@ sealed class MessagesUiState {
 @Composable
 fun MessagesScreen(
     messagesViewModel: MessagesViewModel = viewModel(),
-    paddingValues: PaddingValues
+    navController: NavController
 ) {
     val messages by messagesViewModel.messages.collectAsState()
     val isLoading by messagesViewModel.isLoading.collectAsState()
@@ -84,56 +90,77 @@ fun MessagesScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-    ) {
-
-        when (uiState) {
-            is MessagesUiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate("create_message_route")
+                },
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "Create New Message"
+                )
             }
-            is MessagesUiState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = uiState.message,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                        Button(onClick = { messagesViewModel.refreshMessages() }) {
-                            Text("Retry")
+        }
+    ) { innerPadding ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+
+            when (uiState) {
+                is MessagesUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is MessagesUiState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = uiState.message,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                            Button(onClick = { messagesViewModel.refreshMessages() }) {
+                                Text("Retry")
+                            }
                         }
                     }
                 }
-            }
-            is MessagesUiState.Empty -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "No messages found.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-            is MessagesUiState.Success -> {
-                SwipeRefresh(
-                    state = rememberSwipeRefreshState(uiState.isRefreshing),
-                    onRefresh = { messagesViewModel.refreshMessages() }
-                ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(vertical = 8.dp)
+                is MessagesUiState.Empty -> {
+                    SwipeRefresh(
+                        state = rememberSwipeRefreshState(isRefreshing = isLoading),
+                        onRefresh = { messagesViewModel.refreshMessages() }
                     ) {
-                        items(
-                            items = uiState.messages,
-                            key = { message -> message.id }
-                        ) { message ->
-                            MessageItem(message = message)
-                            Divider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "No messages found.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+                }
+                is MessagesUiState.Success -> {
+                    SwipeRefresh(
+                        state = rememberSwipeRefreshState(uiState.isRefreshing),
+                        onRefresh = { messagesViewModel.refreshMessages() }
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            items(
+                                items = uiState.messages,
+                                key = { message -> message.id }
+                            ) { message ->
+                                MessageItem(message = message)
+                                Divider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                            }
                         }
                     }
                 }
@@ -175,54 +202,16 @@ fun MessageItem(message: Message) {
                 color = LocalContentColor.current
             )
             Spacer(modifier = Modifier.height(2.dp))
-
-
-                Text(
-                    text = message.topic,
-                    fontSize = 14.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-            }
-            if (showPopup) {
-                Dialog(onDismissRequest = { showPopup = false }) {
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        tonalElevation = 8.dp,
-                        color = MaterialTheme.colorScheme.surface,
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .wrapContentSize()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(24.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Text(
-                                text = message.topic,
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            Text(
-                                text = String(Base64.getDecoder().decode(message.content)),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Button(
-                                onClick = { showPopup = false },
-                                modifier = Modifier.align(Alignment.End)
-                            ) {
-                                Text("Close")
-                            }
-                        }
-                    }
-                }
-            }
+            Text(
+                text = message.topic,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+            )
         }
 
-
         Spacer(modifier = Modifier.width(8.dp))
-
 
         Text(
             text = formatMessageDate(message.sendDate),
@@ -230,7 +219,44 @@ fun MessageItem(message: Message) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.wrapContentWidth(Alignment.End)
         )
+
     }
+
+    if (showPopup) {
+        Dialog(onDismissRequest = { showPopup = false }) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                tonalElevation = 8.dp,
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .wrapContentSize()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = message.topic,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        text = String(Base64.getDecoder().decode(message.content)),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Button(
+                        onClick = { showPopup = false },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 fun formatMessageDate(dateString: String): String {
     return try {

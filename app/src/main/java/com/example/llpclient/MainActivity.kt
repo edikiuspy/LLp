@@ -37,28 +37,46 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.llpclient.ui.theme.LLpClientTheme
 import com.example.llpclient.view.model.GradesViewModel
 import com.example.llpclient.view.model.LoginViewModel
-import com.example.llpclient.view.model.TimetableViewModel
 import com.example.llpclient.view.model.MessagesViewModel
+import com.example.llpclient.view.model.TimetableViewModel
+import com.example.llpclient.view.screen.CreateMessageScreen
 import com.example.llpclient.view.screen.GradesScreen
 import com.example.llpclient.view.screen.LoginScreen
-import com.example.llpclient.view.screen.TimetableScreen
 import com.example.llpclient.view.screen.MessagesScreen
+import com.example.llpclient.view.screen.TimetableScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+
+
+sealed class Screen(val route: String, val title: String) {
+    object Home : Screen("home", "Home")
+    object Grades : Screen("grades", "Grades")
+    object Timetable : Screen("timetable", "Timetable")
+    object Messages : Screen("messages", "Messages")
+    object CreateMessage : Screen("create_message_route", "New Message")
+}
+
+val drawerScreens = listOf(
+    Screen.Home,
+    Screen.Grades,
+    Screen.Timetable,
+    Screen.Messages
+)
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -91,86 +109,38 @@ fun AppContent(
     messagesViewModel: MessagesViewModel = hiltViewModel()
 ) {
     val isLoggedIn by loginViewModel.isLoggedIn.collectAsState()
-
-    var currentScreen by remember { mutableStateOf("Home") }
+    val navController = rememberNavController()
 
     if (!isLoggedIn) {
         LoginScreen(viewModel = loginViewModel) {
         }
     } else {
-
-        LaunchedEffect(Unit) {
-            if (currentScreen == "Login") {
-                currentScreen = "Home"
-            }
-        }
-
-        DetailedDrawerExample(
-            currentScreen = currentScreen,
-            onScreenSelected = { screen -> currentScreen = screen },
-            content = { paddingValues ->
-                when (currentScreen) {
-                    "Grades" -> GradesScreen(gradesViewModel, paddingValues)
-                    "Messages"-> MessagesScreen(messagesViewModel,paddingValues)
-                    "Home" -> {
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(paddingValues),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text("Welcome Home!")
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(
-                                    onClick = { loginViewModel.logout() }
-                                ) {
-                                    Text("Logout")
-                                }
-                            }
-                        }
-                    }
-                    "Timetable" -> {
-                        TimetableScreen(timetableViewModel)
-                    }
-                    else -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(paddingValues),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text("Screen: $currentScreen")
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(
-                                    onClick = { loginViewModel.logout() }
-                                ) {
-                                    Text("Logout")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        MainScaffoldWithDrawer(
+            navController = navController,
+            loginViewModel = loginViewModel,
+            gradesViewModel = gradesViewModel,
+            timetableViewModel = timetableViewModel,
+            messagesViewModel = messagesViewModel
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailedDrawerExample(
-    currentScreen: String = "Home",
-    onScreenSelected: (String) -> Unit,
-    content: @Composable (PaddingValues) -> Unit
+fun MainScaffoldWithDrawer(
+    navController: NavHostController,
+    loginViewModel: LoginViewModel,
+    gradesViewModel: GradesViewModel,
+    timetableViewModel: TimetableViewModel,
+    messagesViewModel: MessagesViewModel
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val currentScreen = drawerScreens.find { it.route == currentRoute }
+        ?: Screen.Home
 
     ModalNavigationDrawer(
         drawerContent = {
@@ -181,49 +151,49 @@ fun DetailedDrawerExample(
                         .verticalScroll(rememberScrollState())
                 ) {
                     Spacer(Modifier.height(12.dp))
-                    Text("LLp dev build", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
-                    HorizontalDivider()
-
-                    NavigationDrawerItem(
-                        label = { Text("Home") },
-                        selected = currentScreen == "Home",
-                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                        onClick = {
-                            onScreenSelected("Home")
-                            scope.launch { drawerState.close() }
-                        }
+                    Text(
+                        "LLp dev build",
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.titleLarge
                     )
-
-                    NavigationDrawerItem(
-                        label = { Text("Grades") },
-                        selected = currentScreen == "Grades",
-                        icon = { Icon(Icons.Default.Filter6, contentDescription = null) },
-                        onClick = {
-                            onScreenSelected("Grades")
-                            scope.launch { drawerState.close() }
-                        }
-                    )
-
-                    NavigationDrawerItem(
-                        label = { Text("Timetable") },
-                        selected = currentScreen == "Timetable",
-                        icon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null) },
-                        onClick = {
-                            onScreenSelected("Timetable")
-                            scope.launch { drawerState.close() }
-                        },
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Messages") },
-                        selected = currentScreen == "Messages",
-                        icon = { Icon(Icons.AutoMirrored.Outlined.Message, contentDescription = null) },
-                        onClick = {
-                            onScreenSelected("Messages")
-                            scope.launch { drawerState.close() }
-                        },
-                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
 
+                    drawerScreens.forEach { screen ->
+                        NavigationDrawerItem(
+                            label = { Text(screen.title) },
+                            selected = currentRoute == screen.route,
+                            icon = {
+                                Icon(
+                                    imageVector = when (screen) {
+                                        Screen.Home -> Icons.Default.Home
+                                        Screen.Grades -> Icons.Default.Filter6
+                                        Screen.Timetable -> Icons.Outlined.CalendarMonth
+                                        Screen.Messages -> Icons.AutoMirrored.Outlined.Message
+                                        else -> Icons.Default.Home
+                                    },
+                                    contentDescription = screen.title
+                                )
+                            },
+                            onClick = {
+                                navController.navigate(screen.route) {
+
+
+
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+
+
+                                    launchSingleTop = true
+
+                                    restoreState = true
+                                }
+                                scope.launch { drawerState.close() }
+                            },
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
                     Spacer(Modifier.height(12.dp))
                 }
             }
@@ -233,7 +203,7 @@ fun DetailedDrawerExample(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("LLp dev build - $currentScreen") },
+                    title = { Text("LLp dev build - ${currentScreen.title}") },
                     navigationIcon = {
                         IconButton(onClick = {
                             scope.launch {
@@ -250,7 +220,48 @@ fun DetailedDrawerExample(
                 )
             }
         ) { innerPadding ->
-            content(innerPadding)
+
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Home.route,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable(Screen.Home.route) {
+
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Welcome Home!")
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { loginViewModel.logout() }) {
+                                Text("Logout")
+                            }
+                        }
+                    }
+                }
+                composable(Screen.Grades.route) {
+                    GradesScreen(gradesViewModel, PaddingValues())
+                }
+                composable(Screen.Timetable.route) {
+                    TimetableScreen(timetableViewModel)
+                }
+                composable(Screen.Messages.route) {
+                    MessagesScreen(
+                        messagesViewModel = messagesViewModel,
+                        navController = navController
+                    )
+                }
+                composable(Screen.CreateMessage.route) {
+
+                    CreateMessageScreen(navController = navController)
+                }
+
+            }
         }
     }
 }
+
+
+

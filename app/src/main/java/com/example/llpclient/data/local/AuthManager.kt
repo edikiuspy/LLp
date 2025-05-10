@@ -265,12 +265,7 @@ class AuthManager @Inject constructor(
     private suspend fun ensureMessageServiceAccess() {
         try {
             synergyService.visitMessages()
-            val sessionCookies = cookieJar.getCookiesForDomain("synergia.librus.pl")
-            Log.d("AuthManager", "Synergia cookies after visit: $sessionCookies")
-            messageService.initializeMessages()
-            val messageCookies = cookieJar.getCookiesForDomain("wiadomosci.librus.pl")
-            Log.d("AuthManager", "Messages cookies after initialization: $messageCookies")
-            Log.d("AuthManager", "All cookies after initialization:\n$cookieJar")
+
         } catch (e: Exception) {
             Log.e("AuthManager", "Error ensuring message service access", e)
         }
@@ -348,14 +343,6 @@ class SessionCookieJar : CookieJar {
             }
             Log.d("SessionCookieJar", "Cookie not found: $name")
             return null
-        }
-    }
-
-    fun getCookiesForDomain(domain: String): List<Cookie> {
-        synchronized(lock) {
-            val cookies = cookieStore[domain] ?: return emptyList()
-            cookies.removeAll { it.expiresAt <= System.currentTimeMillis() }
-            return cookies.toList()
         }
     }
 
