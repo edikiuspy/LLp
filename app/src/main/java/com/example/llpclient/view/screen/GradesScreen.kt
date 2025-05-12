@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ChatBubble
@@ -41,7 +42,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -53,8 +53,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.llpclient.view.model.Grade
 import com.example.llpclient.view.model.GradesViewModel
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.ui.Alignment
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.SortedMap
@@ -73,7 +75,7 @@ sealed class GradesUiState {
 
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun GradesScreen(
@@ -158,9 +160,15 @@ fun GradesScreen(
                 }
             }
             is GradesUiState.Success -> {
-                SwipeRefresh(
-                    state = rememberSwipeRefreshState(uiState.isRefreshing),
+                val pullRefreshState = rememberPullRefreshState(
+                    refreshing = uiState.isRefreshing,
                     onRefresh = { gradesViewModel.refreshGrades() }
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pullRefresh(pullRefreshState)
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -200,6 +208,12 @@ fun GradesScreen(
                         }
                         item { Spacer(Modifier.height(16.dp)) }
                     }
+
+                    PullRefreshIndicator(
+                        refreshing = uiState.isRefreshing,
+                        state = pullRefreshState,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
                 }
             }
         }

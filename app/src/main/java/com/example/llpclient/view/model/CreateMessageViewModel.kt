@@ -33,18 +33,19 @@ class CreateMessageViewModel @Inject constructor(
 ) : ViewModel() {
 
 
-    var isSending by mutableStateOf(false); private set
-    private val _sendResult = MutableSharedFlow<SendResult>(); val sendResult = _sendResult.asSharedFlow()
-    var recipientTypes by mutableStateOf<List<RecipientTypeInfo>>(emptyList()); private set
-    var isLoadingInitialData by mutableStateOf(false); private set
-    var initialDataError by mutableStateOf<String?>(null); private set
-    private var studentSubjectsList by mutableStateOf<List<StudentSubject>>(emptyList())
-    private var allTeachersList by mutableStateOf<List<Receiver>>(emptyList())
-    var expandedTypeId by mutableStateOf<String?>(null); private set
-    var individualsInExpandedType by mutableStateOf<List<Receiver>>(emptyList()); private set
-    var isLoadingIndividuals by mutableStateOf(false); private set
-    var individualError by mutableStateOf<String?>(null); private set
-    var selectedReceivers by mutableStateOf<Set<Receiver>>(emptySet()); private set
+    var isSending by mutableStateOf(false)
+    private val _sendResult = MutableSharedFlow<SendResult>()
+    val sendResult = _sendResult.asSharedFlow()
+    var recipientTypes by mutableStateOf<List<RecipientTypeInfo>>(emptyList())
+    var isLoadingInitialData by mutableStateOf(false)
+    var initialDataError by mutableStateOf<String?>(null)
+    var studentSubjectsList by mutableStateOf<List<StudentSubject>>(emptyList())
+    var allTeachersList by mutableStateOf<List<Receiver>>(emptyList())
+    var expandedTypeId by mutableStateOf<String?>(null)
+    var individualsInExpandedType by mutableStateOf<List<Receiver>>(emptyList())
+    var isLoadingIndividuals by mutableStateOf(false)
+    var individualError by mutableStateOf<String?>(null)
+    var selectedReceivers by mutableStateOf<Set<Receiver>>(emptySet())
 
 
     fun loadInitialRecipientData() {

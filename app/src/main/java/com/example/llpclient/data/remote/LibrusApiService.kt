@@ -3,7 +3,6 @@ package com.example.llpclient.data.remote
 import com.example.llpclient.data.remote.dto.CommentApiResponse
 import com.example.llpclient.data.remote.dto.GradeCategoryResponse
 import com.example.llpclient.data.remote.dto.GradesResponse
-import com.example.llpclient.data.remote.dto.Message
 import com.example.llpclient.data.remote.dto.MessageResponse
 import com.example.llpclient.data.remote.dto.MessagesResponse
 import com.example.llpclient.data.remote.dto.ReceiverGroupResponse
@@ -11,7 +10,7 @@ import com.example.llpclient.data.remote.dto.RecipientTypesResponse
 import com.example.llpclient.data.remote.dto.SendMessageRequest
 import com.example.llpclient.data.remote.dto.StudentSubjectsResponse
 import com.example.llpclient.data.remote.dto.SubjectResponse
-import com.example.llpclient.data.remote.dto.TimetableResponse
+import com.example.llpclient.data.remote.dto.TimetableApiResponseDto
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -74,5 +73,7 @@ interface LibrusApiService {
     @POST("api/messages")
     suspend fun sendMessage(@Body messageRequest: SendMessageRequest): Response<ResponseBody>
     @GET("2.0/Timetables")
-    suspend fun getTimetable(): Response<TimetableResponse>
+    suspend fun getTimetable(
+        @Query("weekStart") weekStart: String
+    ): Response<TimetableApiResponseDto>
 }

@@ -28,7 +28,6 @@ class MessagesRepository @Inject constructor(
                         apiMessages.map { apiMessage ->
                             async {
                                 val content=getMessageContent(apiMessage.messageId)
-                                Log.d("a",content.toString())
                                 Message(
                                     id = apiMessage.messageId,
                                     sendDate = apiMessage.sendDate,

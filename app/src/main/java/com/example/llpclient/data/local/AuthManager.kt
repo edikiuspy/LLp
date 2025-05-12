@@ -170,7 +170,7 @@ class AuthManager @Inject constructor(
 
 
     suspend fun reAuthenticate(): String? {
-        Log.i("AuthManager", "Attempting automatic re-authentication using stored credentials (INSECURE).")
+        Log.i("AuthManager", "Attempting automatic re-authentication using stored credentials.")
         val user = withContext(Dispatchers.IO) { userDao.getLoggedInUser() }
 
         if (user?.username == null || user.passwordForRelogin == null) {
@@ -235,7 +235,7 @@ class AuthManager @Inject constructor(
                     return@withContext Result.failure(Exception("Failed to get auth token from cookies during login"))
                 }
 
-                Log.i("AuthManager", "Login successful, got token. Saving user and credentials (INSECURE).")
+                Log.i("AuthManager", "Login successful, got token. Saving user and credentials.")
 
                 val user = UserEntity(
                     id = username,
