@@ -3,4 +3,6 @@
     <string name="timetable_widget_description">Today\'s Timetable</string>
     <string name="refresh">Refresh</string>
     <string name="no_lessons_today_or_loading">No lessons today or loading…</string>
+    <string name="widget_status_cancelled">ODWOŁANE</string>
+    <string name="widget_status_substitution">ZASTĘPSTWO</string>
 </resources>
