@@ -51,7 +51,7 @@ fun LoginScreen(
 
                 viewModel.clearLoginError()
             },
-            label = { Text("Username") },
+            label = { Text("Login") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
